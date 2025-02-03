@@ -412,8 +412,8 @@ static void lwftp_control_process(lwftp_session_t *s, struct tcp_pcb *tpcb, stru
   // Handle second step in state machine
   switch ( s->control_state ) {
     case LWFTP_DATAEND:
-      lwftp_data_close(s, result);
       s->control_state = LWFTP_LOGGED;
+      lwftp_data_close(s, result);
       break;
     case LWFTP_QUIT:
       lwftp_send_msg(s, PTRNLEN("QUIT\r\n"));
