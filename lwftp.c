@@ -351,7 +351,7 @@ static void lwftp_control_process(lwftp_session_t *s, struct tcp_pcb *tpcb, stru
       break;
     case LWFTP_RETR_SENT:
       if (response>0) {
-        if (response==150) {
+        if (response==125 || response==150) {
           s->control_state = LWFTP_XFERING;
         } else if (response==550) {
             s->control_state = LWFTP_DATAEND;
@@ -366,12 +366,12 @@ static void lwftp_control_process(lwftp_session_t *s, struct tcp_pcb *tpcb, stru
       break;
     case LWFTP_STOR_SENT:
       if (response>0) {
-        if (response==150) {
+        if (response==125 || response==150) {
           s->control_state = LWFTP_XFERING;
           lwftp_data_sent(s,NULL,0);
         } else {
           s->control_state = LWFTP_DATAEND;
-          LWIP_DEBUGF(LWFTP_WARNING, ("lwftp:expected 150, received %d\n",response));
+          LWIP_DEBUGF(LWFTP_WARNING, ("lwftp:expected 125 or 150, received %d\n",response));
         }
       }
       break;
