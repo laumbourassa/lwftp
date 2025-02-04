@@ -68,8 +68,9 @@ typedef enum
 	LWFTP_LOGGED,
 	LWFTP_TYPE_SENT,
 	LWFTP_PASV_SENT,
-	LWFTP_RETR_SENT,
 	LWFTP_STOR_SENT,
+	LWFTP_RETR_SENT,
+	LWFTP_SIZE_SENT,
 	LWFTP_XFERING,
 	LWFTP_DATAEND,
 	LWFTP_QUIT,
@@ -83,26 +84,28 @@ typedef struct
 	// User interface
 	ip_addr_t server_ip;
 	u16_t server_port;
-	const char *remote_path;
-	const char *user;
-	const char *pass;
-	void *handle;
+	const char* remote_path;
+	const char* user;
+	const char* pass;
+	void* handle;
 	uint (*data_source)(void*, const char**, uint);
 	uint (*data_sink)(void*, const char*, uint);
 	void (*done_fn)(void*, int);
+	uint* size;
 	uint timeout;
 	// Internal data
 	lwftp_state_t control_state;
 	lwftp_state_t target_state;
 	lwftp_state_t data_state;
-	struct tcp_pcb *control_pcb;
-	struct tcp_pcb *data_pcb;
+	struct tcp_pcb* control_pcb;
+	struct tcp_pcb* data_pcb;
 } lwftp_session_t;
 
 // LWFTP API
 err_t lwftp_connect(lwftp_session_t *s);
 err_t lwftp_store(lwftp_session_t *s);
 err_t lwftp_retrieve(lwftp_session_t *s);
+err_t lwftp_size(lwftp_session_t *s);
 void lwftp_close(lwftp_session_t *s);
 
 #ifdef __cplusplus
