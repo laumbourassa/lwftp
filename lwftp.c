@@ -48,33 +48,34 @@
 
 #define PTRNLEN(s)  s,(sizeof(s)-1)
 
-static err_t lwftp_pcb_close(struct tcp_pcb *tpcb);
-static err_t lwftp_send_next_data(lwftp_session_t *s);
-static err_t lwftp_data_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p,
+static err_t lwftp_pcb_close(struct tcp_pcb* tpcb);
+static err_t lwftp_send_next_data(lwftp_session_t* s);
+static err_t lwftp_data_recv(void* arg, struct tcp_pcb* tpcb, struct pbuf* p,
 		err_t err);
-static err_t lwftp_data_sent(void *arg, struct tcp_pcb *tpcb, u16_t len);
-static void lwftp_data_err(void *arg, err_t err);
-static err_t lwftp_data_connected(void *arg, struct tcp_pcb *tpcb, err_t err);
-static err_t lwftp_data_open(lwftp_session_t *s, struct pbuf *p);
-static err_t lwftp_send_msg(lwftp_session_t *s, const char *msg, size_t len);
-static void lwftp_data_close(lwftp_session_t *s, int result);
-static void lwftp_control_close(lwftp_session_t *s, int result);
-static void lwftp_control_process(lwftp_session_t *s, struct tcp_pcb *tpcb,
-		struct pbuf *p);
-static void lwftp_start_STOR(void *arg);
-static void lwftp_start_RETR(void *arg);
-static void lwftp_start_SIZE(void *arg);
-static void lwftp_send_QUIT(void *arg);
-static err_t lwftp_control_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p,
+static err_t lwftp_data_sent(void* arg, struct tcp_pcb* tpcb, u16_t len);
+static void lwftp_data_err(void* arg, err_t err);
+static err_t lwftp_data_connected(void* arg, struct tcp_pcb* tpcb, err_t err);
+static err_t lwftp_data_open(lwftp_session_t* s, struct pbuf* p);
+static err_t lwftp_send_msg(lwftp_session_t* s, const char* msg, size_t len);
+static void lwftp_data_close(lwftp_session_t* s, int result);
+static void lwftp_control_close(lwftp_session_t* s, int result);
+static void lwftp_control_process(lwftp_session_t* s, struct tcp_pcb* tpcb,
+		struct pbuf* p);
+static void lwftp_start_STOR(void* arg);
+static void lwftp_start_RETR(void* arg);
+static void lwftp_start_SIZE(void* arg);
+static void lwftp_start_MDTM(void* arg);
+static void lwftp_send_QUIT(void* arg);
+static err_t lwftp_control_recv(void* arg, struct tcp_pcb* tpcb, struct pbuf* p,
 		err_t err);
-static err_t lwftp_control_sent(void *arg, struct tcp_pcb *tpcb, u16_t len);
-static void lwftp_control_err(void *arg, err_t err);
-static err_t lwftp_control_connected(void *arg, struct tcp_pcb *tpcb, err_t err);
+static err_t lwftp_control_sent(void* arg, struct tcp_pcb* tpcb, u16_t len);
+static void lwftp_control_err(void* arg, err_t err);
+static err_t lwftp_control_connected(void* arg, struct tcp_pcb* tpcb, err_t err);
 
 /** Open a control session
  * @param Session structure
  */
-err_t lwftp_connect(lwftp_session_t *s)
+err_t lwftp_connect(lwftp_session_t* s)
 {
 	err_t error;
 	enum lwftp_results retval = LWFTP_RESULT_ERR_UNKNOWN;
@@ -119,7 +120,7 @@ err_t lwftp_connect(lwftp_session_t *s)
 /** Store data to a remote file
  * @param Session structure
  */
-err_t lwftp_store(lwftp_session_t *s)
+err_t lwftp_store(lwftp_session_t* s)
 {
 	err_t error;
 	enum lwftp_results retval = LWFTP_RESULT_ERR_UNKNOWN;
@@ -158,7 +159,7 @@ err_t lwftp_store(lwftp_session_t *s)
 /** Retrieve data from a remote file
  * @param Session structure
  */
-err_t lwftp_retrieve(lwftp_session_t *s)
+err_t lwftp_retrieve(lwftp_session_t* s)
 {
 	err_t error;
 	enum lwftp_results retval = LWFTP_RESULT_ERR_UNKNOWN;
@@ -197,19 +198,19 @@ err_t lwftp_retrieve(lwftp_session_t *s)
 /** Get the size a remote file
  * @param Session structure
  */
-err_t lwftp_size(lwftp_session_t *s)
+err_t lwftp_size(lwftp_session_t* s)
 {
 	err_t error;
 	enum lwftp_results retval = LWFTP_RESULT_ERR_UNKNOWN;
 
-// Check user supplied data
+	// Check user supplied data
 	if ((s->control_state != LWFTP_LOGGED) || !s->remote_path || s->data_pcb)
 	{
 		LWIP_DEBUGF(LWFTP_WARNING, ("lwftp: invalid session data\n"));
 		retval = LWFTP_RESULT_ERR_ARGUMENT;
 		goto exit;
 	}
-// Get data pcb
+	// Get data pcb
 	s->data_pcb = tcp_new();
 	if (!s->data_pcb)
 	{
@@ -217,7 +218,7 @@ err_t lwftp_size(lwftp_session_t *s)
 		retval = LWFTP_RESULT_ERR_MEMORY;
 		goto exit;
 	}
-// Initiate transfer
+	// Initiate transfer
 	error = tcpip_callback(lwftp_start_SIZE, s);
 	if (error == ERR_OK)
 	{
@@ -233,10 +234,46 @@ err_t lwftp_size(lwftp_session_t *s)
 	return retval;
 }
 
+err_t lwftp_modification_time(lwftp_session_t* s)
+{
+	err_t error;
+	enum lwftp_results retval = LWFTP_RESULT_ERR_UNKNOWN;
+
+	// Check user supplied data
+	if ((s->control_state != LWFTP_LOGGED) || !s->remote_path || s->data_pcb)
+	{
+		LWIP_DEBUGF(LWFTP_WARNING, ("lwftp: invalid session data\n"));
+		retval = LWFTP_RESULT_ERR_ARGUMENT;
+		goto exit;
+	}
+	// Get data pcb
+	s->data_pcb = tcp_new();
+	if (!s->data_pcb)
+	{
+		LWIP_DEBUGF(LWFTP_SERIOUS, ("lwftp: cannot alloc data_pcb (low memory?)\n"));
+		retval = LWFTP_RESULT_ERR_MEMORY;
+		goto exit;
+	}
+	// Initiate transfer
+	error = tcpip_callback(lwftp_start_MDTM, s);
+	if (error == ERR_OK)
+	{
+		retval = LWFTP_RESULT_INPROGRESS;
+	}
+	else
+	{
+		LWIP_DEBUGF(LWFTP_SEVERE, ("lwftp: cannot start MDTM (%s)",lwip_strerr(error)));
+		retval = LWFTP_RESULT_ERR_INTERNAL;
+	}
+
+	exit: if (s->done_fn) s->done_fn(s->handle, retval);
+	return retval;
+}
+
 /** Terminate FTP session
  * @param Session structure
  */
-void lwftp_close(lwftp_session_t *s)
+void lwftp_close(lwftp_session_t* s)
 {
 	err_t error;
 
@@ -257,7 +294,7 @@ void lwftp_close(lwftp_session_t *s)
 /** Close control or data pcb
  * @param pointer to lwftp session data
  */
-static err_t lwftp_pcb_close(struct tcp_pcb *tpcb)
+static err_t lwftp_pcb_close(struct tcp_pcb* tpcb)
 {
 	err_t error;
 
@@ -277,7 +314,7 @@ static err_t lwftp_pcb_close(struct tcp_pcb *tpcb)
  * @param pointer to PCB
  * @param number of bytes sent
  */
-static err_t lwftp_send_next_data(lwftp_session_t *s)
+static err_t lwftp_send_next_data(lwftp_session_t* s)
 {
 	const char* data;
 	int len = 0;
@@ -310,7 +347,7 @@ static err_t lwftp_send_next_data(lwftp_session_t *s)
  * @param pointer to incoming pbuf
  * @param state of incoming process
  */
-static err_t lwftp_data_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p,
+static err_t lwftp_data_recv(void* arg, struct tcp_pcb* tpcb, struct pbuf* p,
 		err_t err)
 {
 	lwftp_session_t* s = (lwftp_session_t*) arg;
@@ -349,7 +386,7 @@ static err_t lwftp_data_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p,
  * @param pointer to PCB
  * @param number of bytes sent
  */
-static err_t lwftp_data_sent(void *arg, struct tcp_pcb *tpcb, u16_t len)
+static err_t lwftp_data_sent(void* arg, struct tcp_pcb* tpcb, u16_t len)
 {
 	lwftp_session_t* s = (lwftp_session_t*) arg;
 
@@ -364,7 +401,7 @@ static err_t lwftp_data_sent(void *arg, struct tcp_pcb *tpcb, u16_t len)
  * @param pointer to lwftp session data
  * @param state of connection
  */
-static void lwftp_data_err(void *arg, err_t err)
+static void lwftp_data_err(void* arg, err_t err)
 {
 	LWIP_UNUSED_ARG(err);
 	if (arg != NULL)
@@ -386,7 +423,7 @@ static void lwftp_data_err(void *arg, err_t err)
  * @param pointer to PCB
  * @param state of connection
  */
-static err_t lwftp_data_connected(void *arg, struct tcp_pcb *tpcb, err_t err)
+static err_t lwftp_data_connected(void* arg, struct tcp_pcb* tpcb, err_t err)
 {
 	lwftp_session_t* s = (lwftp_session_t*) arg;
 
@@ -406,7 +443,7 @@ static err_t lwftp_data_connected(void *arg, struct tcp_pcb *tpcb, err_t err)
  * @param pointer to lwftp session data
  * @param pointer to incoming PASV response
  */
-static err_t lwftp_data_open(lwftp_session_t *s, struct pbuf *p)
+static err_t lwftp_data_open(lwftp_session_t* s, struct pbuf* p)
 {
 	err_t error;
 	char* ptr;
@@ -442,7 +479,7 @@ static err_t lwftp_data_open(lwftp_session_t *s, struct pbuf *p)
  * @param pointer to lwftp session data
  * @param pointer to message string
  */
-static err_t lwftp_send_msg(lwftp_session_t *s, const char *msg, size_t len)
+static err_t lwftp_send_msg(lwftp_session_t* s, const char* msg, size_t len)
 {
 	err_t error;
 
@@ -459,7 +496,7 @@ static err_t lwftp_send_msg(lwftp_session_t *s, const char *msg, size_t len)
  * @param pointer to lwftp session data
  * @param result to pass to callback fn (if called)
  */
-static void lwftp_data_close(lwftp_session_t *s, int result)
+static void lwftp_data_close(lwftp_session_t* s, int result)
 {
 	if (s->data_pcb)
 	{
@@ -476,7 +513,7 @@ static void lwftp_data_close(lwftp_session_t *s, int result)
  * @param pointer to lwftp session data
  * @param result to pass to callback fn (if called)
  */
-static void lwftp_control_close(lwftp_session_t *s, int result)
+static void lwftp_control_close(lwftp_session_t* s, int result)
 {
 	if (s->data_pcb)
 	{
@@ -500,8 +537,8 @@ static void lwftp_control_close(lwftp_session_t *s, int result)
  * @param pointer to PCB
  * @param pointer to incoming data
  */
-static void lwftp_control_process(lwftp_session_t *s, struct tcp_pcb *tpcb,
-		struct pbuf *p)
+static void lwftp_control_process(lwftp_session_t* s, struct tcp_pcb* tpcb,
+		struct pbuf* p)
 {
 	uint response = 0;
 	int result = LWFTP_RESULT_ERR_SRVR_RESP;
@@ -596,6 +633,9 @@ static void lwftp_control_process(lwftp_session_t *s, struct tcp_pcb *tpcb,
 				case LWFTP_SIZE_SENT:
 					lwftp_send_msg(s, PTRNLEN("SIZE "));
 					break;
+				case LWFTP_MDTM_SENT:
+					lwftp_send_msg(s, PTRNLEN("MDTM "));
+					break;
 				default:
 					LWIP_DEBUGF(LWFTP_SEVERE, ("lwftp: Unexpected internal state"));
 					s->target_state = LWFTP_QUIT;
@@ -653,6 +693,28 @@ static void lwftp_control_process(lwftp_session_t *s, struct tcp_pcb *tpcb,
 				s->control_state = LWFTP_DATAEND;
 				result = LWFTP_RESULT_OK;
 				s->size = strtoul(p->payload + 4, NULL, 10);
+			}
+			else if (response == 550)
+			{
+				s->control_state = LWFTP_DATAEND;
+				result = LWFTP_RESULT_ERR_FILENAME;
+				LWIP_DEBUGF(LWFTP_WARNING, ("lwftp: Failed to open file '%s'\n", s->remote_path));
+			}
+			else
+			{
+				s->control_state = LWFTP_DATAEND;
+				LWIP_DEBUGF(LWFTP_WARNING, ("lwftp: expected 213, received %d\n",response));
+			}
+		}
+		break;
+	case LWFTP_MDTM_SENT:
+		if (response > 0)
+		{
+			if (response == 213)
+			{
+				s->control_state = LWFTP_DATAEND;
+				result = LWFTP_RESULT_OK;
+				s->mdtm = strtoull(p->payload + 4, NULL, 10);
 			}
 			else if (response == 550)
 			{
@@ -733,7 +795,7 @@ static void lwftp_control_process(lwftp_session_t *s, struct tcp_pcb *tpcb,
 /** Start a STOR data session
  * @param pointer to lwftp session
  */
-static void lwftp_start_STOR(void *arg)
+static void lwftp_start_STOR(void* arg)
 {
 	lwftp_session_t* s = (lwftp_session_t*) arg;
 
@@ -753,7 +815,7 @@ static void lwftp_start_STOR(void *arg)
 /** Start a RETR data session
  * @param pointer to lwftp session
  */
-static void lwftp_start_RETR(void *arg)
+static void lwftp_start_RETR(void* arg)
 {
 	lwftp_session_t* s = (lwftp_session_t*) arg;
 
@@ -773,7 +835,7 @@ static void lwftp_start_RETR(void *arg)
 /** Start a SIZE data session
  * @param pointer to lwftp session
  */
-static void lwftp_start_SIZE(void *arg)
+static void lwftp_start_SIZE(void* arg)
 {
 	lwftp_session_t* s = (lwftp_session_t*) arg;
 
@@ -790,10 +852,30 @@ static void lwftp_start_SIZE(void *arg)
 	}
 }
 
+/** Start a MDTM data session
+ * @param pointer to lwftp session
+ */
+static void lwftp_start_MDTM(void* arg)
+{
+	lwftp_session_t* s = (lwftp_session_t*) arg;
+
+	if (s->control_state == LWFTP_LOGGED)
+	{
+		lwftp_send_msg(s, PTRNLEN("TYPE I\r\n"));
+		s->control_state = LWFTP_TYPE_SENT;
+		s->target_state = LWFTP_MDTM_SENT;
+	}
+	else
+	{
+		LWIP_DEBUGF(LWFTP_SEVERE, ("lwftp: unexpected condition\n"));
+		if (s->done_fn) s->done_fn(s->handle, LWFTP_RESULT_ERR_INTERNAL);
+	}
+}
+
 /** Send QUIT to terminate control session
  * @param pointer to lwftp session
  */
-static void lwftp_send_QUIT(void *arg)
+static void lwftp_send_QUIT(void* arg)
 {
 	lwftp_session_t* s = (lwftp_session_t*) arg;
 
@@ -811,7 +893,7 @@ static void lwftp_send_QUIT(void *arg)
  * @param pointer to incoming pbuf
  * @param state of incoming process
  */
-static err_t lwftp_control_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p,
+static err_t lwftp_control_recv(void* arg, struct tcp_pcb* tpcb, struct pbuf* p,
 		err_t err)
 {
 	lwftp_session_t* s = (lwftp_session_t*) arg;
@@ -842,7 +924,7 @@ static err_t lwftp_control_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p,
  * @param pointer to PCB
  * @param number of bytes sent
  */
-static err_t lwftp_control_sent(void *arg, struct tcp_pcb *tpcb, u16_t len)
+static err_t lwftp_control_sent(void* arg, struct tcp_pcb* tpcb, u16_t len)
 {
 	LWIP_DEBUGF(LWFTP_TRACE, ("lwftp: successfully sent %d bytes\n",len));
 	return ERR_OK;
@@ -852,7 +934,7 @@ static err_t lwftp_control_sent(void *arg, struct tcp_pcb *tpcb, u16_t len)
  * @param pointer to lwftp session data
  * @param state of connection
  */
-static void lwftp_control_err(void *arg, err_t err)
+static void lwftp_control_err(void* arg, err_t err)
 {
 	LWIP_UNUSED_ARG(err);
 	if (arg != NULL)
@@ -879,7 +961,7 @@ static void lwftp_control_err(void *arg, err_t err)
  * @param pointer to PCB
  * @param state of connection
  */
-static err_t lwftp_control_connected(void *arg, struct tcp_pcb *tpcb, err_t err)
+static err_t lwftp_control_connected(void* arg, struct tcp_pcb* tpcb, err_t err)
 {
 	lwftp_session_t* s = (lwftp_session_t*) arg;
 
