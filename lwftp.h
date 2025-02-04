@@ -71,6 +71,7 @@ typedef enum
 	LWFTP_STOR_SENT,
 	LWFTP_RETR_SENT,
 	LWFTP_SIZE_SENT,
+	LWFTP_MDTM_SENT,
 	LWFTP_XFERING,
 	LWFTP_DATAEND,
 	LWFTP_QUIT,
@@ -91,7 +92,8 @@ typedef struct
 	uint (*data_source)(void*, const char**, uint);
 	uint (*data_sink)(void*, const char*, uint);
 	void (*done_fn)(void*, int);
-	uint* size;
+	uint size;
+	u64_t mdtm;
 	uint timeout;
 	// Internal data
 	lwftp_state_t control_state;
@@ -102,11 +104,12 @@ typedef struct
 } lwftp_session_t;
 
 // LWFTP API
-err_t lwftp_connect(lwftp_session_t *s);
-err_t lwftp_store(lwftp_session_t *s);
-err_t lwftp_retrieve(lwftp_session_t *s);
-err_t lwftp_size(lwftp_session_t *s);
-void lwftp_close(lwftp_session_t *s);
+err_t lwftp_connect(lwftp_session_t* s);
+err_t lwftp_store(lwftp_session_t* s);
+err_t lwftp_retrieve(lwftp_session_t* s);
+err_t lwftp_size(lwftp_session_t* s);
+err_t lwftp_modification_time(lwftp_session_t* s);
+void lwftp_close(lwftp_session_t* s);
 
 #ifdef __cplusplus
 }
