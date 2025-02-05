@@ -141,7 +141,7 @@ err_t lwftp_store(lwftp_session_t* s)
 		goto exit;
 	}
 	// Initiate transfer
-	error = tcpip_callback(lwftp_start_STOR, s);
+	error = tcpip_try_callback(lwftp_start_STOR, s);
 	if (error == ERR_OK)
 	{
 		retval = LWFTP_RESULT_INPROGRESS;
@@ -180,7 +180,7 @@ err_t lwftp_retrieve(lwftp_session_t* s)
 		goto exit;
 	}
 	// Initiate transfer
-	error = tcpip_callback(lwftp_start_RETR, s);
+	error = tcpip_try_callback(lwftp_start_RETR, s);
 	if (error == ERR_OK)
 	{
 		retval = LWFTP_RESULT_INPROGRESS;
@@ -219,7 +219,7 @@ err_t lwftp_size(lwftp_session_t* s)
 		goto exit;
 	}
 	// Initiate transfer
-	error = tcpip_callback(lwftp_start_SIZE, s);
+	error = tcpip_try_callback(lwftp_start_SIZE, s);
 	if (error == ERR_OK)
 	{
 		retval = LWFTP_RESULT_INPROGRESS;
@@ -255,7 +255,7 @@ err_t lwftp_modification_time(lwftp_session_t* s)
 		goto exit;
 	}
 	// Initiate transfer
-	error = tcpip_callback(lwftp_start_MDTM, s);
+	error = tcpip_try_callback(lwftp_start_MDTM, s);
 	if (error == ERR_OK)
 	{
 		retval = LWFTP_RESULT_INPROGRESS;
@@ -281,7 +281,7 @@ void lwftp_close(lwftp_session_t* s)
 	if (s->control_state == LWFTP_CLOSED) return;
 
 	// Initiate transfer
-	error = tcpip_callback(lwftp_send_QUIT, s);
+	error = tcpip_try_callback(lwftp_send_QUIT, s);
 	if (error != ERR_OK)
 	{
 		// This is a critical error, try to close anyway
@@ -692,7 +692,7 @@ static void lwftp_control_process(lwftp_session_t* s, struct tcp_pcb* tpcb,
 			{
 				s->control_state = LWFTP_DATAEND;
 				result = LWFTP_RESULT_OK;
-				s->size = strtoul(p->payload + 4, NULL, 10);
+				s->size = strtoull(p->payload + 4, NULL, 10);
 			}
 			else if (response == 550)
 			{
